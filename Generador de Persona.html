@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Persona de Marketing con IA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        .card-shadow {
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+<body class="gradient-bg min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-4xl mx-auto">
+        <div class="bg-white rounded-xl card-shadow overflow-hidden">
+            <div class="p-8 md:p-12">
+                <h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-2">Generador de Persona de Marketing con IA</h1>
+                <p class="text-gray-600 mb-8">Describe tu idea de negocio o producto y la IA creará un perfil de cliente ideal para tu estrategia.</p>
+
+                <div class="space-y-4">
+                    <div>
+                        <label for="businessIdea" class="block text-sm font-medium text-gray-700 mb-1">Idea de Negocio / Producto</label>
+                        <textarea id="businessIdea" rows="4" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition" placeholder="Ej: Una app de suscripción de café de especialidad entregado a domicilio."></textarea>
+                    </div>
+                    <button id="generateButton" class="w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-blue-700 transition-all duration-300 ease-in-out flex items-center justify-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707m12.728 0l-.707.707M12 21v-1m-6.657-3.343l.707-.707m0-12.728l-.707.707"></path></svg>
+                        Generar Persona
+                    </button>
+                </div>
+            </div>
+
+            <div id="result" class="p-8 md:p-12 bg-gray-50 hidden">
+                 <div id="loader" class="text-center">
+                    <svg class="animate-spin h-8 w-8 text-blue-600 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <p class="mt-4 text-gray-600">Analizando y creando el perfil...</p>
+                </div>
+
+                <div id="personaContent" class="hidden">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6 border-b pb-3">Perfil del Cliente Ideal</h2>
+                    <div class="grid md:grid-cols-3 gap-8">
+                        <div class="md:col-span-1 flex flex-col items-center text-center">
+                            <img id="personaImage" src="https://placehold.co/200x200/E2E8F0/4A5568?text=Persona" class="rounded-full h-40 w-40 object-cover mb-4 border-4 border-white shadow-lg" alt="Foto de la persona">
+                            <h3 id="personaName" class="text-xl font-bold text-blue-700"></h3>
+                            <p id="personaQuote" class="text-gray-500 italic mt-1"></p>
+                        </div>
+                        <div class="md:col-span-2">
+                            <div id="personaDetails"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+             <div id="error" class="hidden p-4 bg-red-100 text-red-700 rounded-lg m-8">
+                <p><strong>Error:</strong> <span id="errorMessage"></span></p>
+             </div>
+        </div>
+    </div>
+
+    <script>
+        const generateButton = document.getElementById('generateButton');
+        const businessIdeaInput = document.getElementById('businessIdea');
+        const resultDiv = document.getElementById('result');
+        const loader = document.getElementById('loader');
+        const personaContent = document.getElementById('personaContent');
+        const errorDiv = document.getElementById('error');
+        const errorMessageSpan = document.getElementById('errorMessage');
+
+        generateButton.addEventListener('click', async () => {
+            const businessIdea = businessIdeaInput.value.trim();
+            if (!businessIdea) {
+                showError('Por favor, introduce una idea de negocio.');
+                return;
+            }
+
+            // Reset UI
+            hideError();
+            resultDiv.classList.remove('hidden');
+            loader.classList.remove('hidden');
+            personaContent.classList.add('hidden');
+            generateButton.disabled = true;
+            generateButton.classList.add('opacity-50', 'cursor-not-allowed');
+
+            try {
+                // Construct the prompt for the AI
+                const prompt = `
+                    Actúa como un estratega de marketing experto. Basado en la siguiente idea de negocio, crea un perfil de cliente ideal (marketing persona).
+                    Idea de negocio: "${businessIdea}"
+
+                    Genera la respuesta en formato JSON con la siguiente estructura:
+                    {
+                      "name": "Un nombre ficticio (ej. Sofía Rodríguez)",
+                      "age": "Un rango de edad (ej. 28-35 años)",
+                      "occupation": "Una profesión u ocupación (ej. Diseñadora Gráfica Freelance)",
+                      "location": "Una ubicación general (ej. Grandes ciudades)",
+                      "income": "Un nivel de ingresos (ej. Medio-alto)",
+                      "quote": "Una frase corta que esta persona diría sobre sus necesidades o deseos relacionados con el producto.",
+                      "bio": "Una biografía corta de 2-3 frases que describa su estilo de vida y personalidad.",
+                      "goals": ["Una lista de 3 metas personales o profesionales relevantes."],
+                      "frustrations": ["Una lista de 3 frustraciones o 'pains' que tu producto podría resolver."],
+                      "image_prompt": "Un prompt detallado para un generador de imágenes de IA que represente a esta persona de forma realista (ej. 'foto de retrato de una mujer latina de 30 años, sonriendo, con gafas, en un café moderno, luz natural')."
+                    }
+                    No incluyas nada más que el objeto JSON en tu respuesta.
+                `;
+
+                // Fetch response from Gemini
+                const response = await callGemini(prompt);
+                const persona = JSON.parse(response);
+
+                // Fetch image from a placeholder service using the AI-generated prompt
+                const imageUrl = `https://source.unsplash.com/400x400/?${encodeURIComponent(persona.image_prompt)}`;
+
+                // Display the results
+                displayPersona(persona, imageUrl);
+
+            } catch (error) {
+                console.error('Error:', error);
+                showError('No se pudo generar la persona. Por favor, inténtalo de nuevo.');
+            } finally {
+                // Re-enable button and hide loader
+                loader.classList.add('hidden');
+                generateButton.disabled = false;
+                generateButton.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        });
+
+        function displayPersona(persona, imageUrl) {
+            document.getElementById('personaImage').src = imageUrl;
+            document.getElementById('personaImage').onerror = function() { this.src = 'https://placehold.co/200x200/E2E8F0/4A5568?text=Imagen'; };
+            document.getElementById('personaName').textContent = persona.name;
+            document.getElementById('personaQuote').textContent = `"${persona.quote}"`;
+
+            const detailsContainer = document.getElementById('personaDetails');
+            detailsContainer.innerHTML = `
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    <div><strong class="block text-gray-700">Edad:</strong> <span class="text-gray-600">${persona.age}</span></div>
+                    <div><strong class="block text-gray-700">Ocupación:</strong> <span class="text-gray-600">${persona.occupation}</span></div>
+                    <div><strong class="block text-gray-700">Ubicación:</strong> <span class="text-gray-600">${persona.location}</span></div>
+                    <div><strong class="block text-gray-700">Ingresos:</strong> <span class="text-gray-600">${persona.income}</span></div>
+                </div>
+                <div class="mb-6">
+                    <h4 class="font-bold text-gray-800 mb-2">Biografía</h4>
+                    <p class="text-gray-600">${persona.bio}</p>
+                </div>
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="font-bold text-green-700 mb-2">Metas</h4>
+                        <ul class="list-disc list-inside space-y-1 text-gray-600">
+                            ${persona.goals.map(goal => `<li>${goal}</li>`).join('')}
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-red-700 mb-2">Frustraciones</h4>
+                        <ul class="list-disc list-inside space-y-1 text-gray-600">
+                            ${persona.frustrations.map(frustration => `<li>${frustration}</li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+            `;
+            personaContent.classList.remove('hidden');
+        }
+
+        function showError(message) {
+            errorMessageSpan.textContent = message;
+            errorDiv.classList.remove('hidden');
+        }
+
+        function hideError() {
+            errorDiv.classList.add('hidden');
+        }
+        
+        async function callGemini(prompt, retries = 3, delay = 1000) {
+            // IMPORTANT: This is a mock function. In a real environment, 
+            // you would replace this with a server-side call to the Gemini API.
+            // The client-side call is simplified for this portfolio example.
+            const apiKey = ""; // In a real app, use a backend to secure the API key.
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: {
+                    responseMimeType: "application/json",
+                }
+            };
+            
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    // Handle non-2xx responses
+                    const errorBody = await response.json();
+                    console.error("API Error Response:", errorBody);
+                    throw new Error(`La API respondió con el estado: ${response.status}. ${errorBody?.error?.message || ''}`);
+                }
+
+                const result = await response.json();
+                
+                if (result.candidates && result.candidates.length > 0 && result.candidates[0].content && result.candidates[0].content.parts.length > 0) {
+                    // Extract text, assuming it's the first part
+                    return result.candidates[0].content.parts[0].text;
+                } else {
+                    // Handle cases where the response structure is unexpected
+                    console.error("Unexpected API response structure:", result);
+                    if (result.promptFeedback && result.promptFeedback.blockReason) {
+                         throw new Error(`La solicitud fue bloqueada por: ${result.promptFeedback.blockReason}. Detalles: ${JSON.stringify(result.promptFeedback.safetyRatings)}`);
+                    }
+                    throw new Error("Respuesta inesperada de la API. El contenido está vacío o tiene un formato incorrecto.");
+                }
+            } catch (error) {
+                if (retries > 0) {
+                    console.log(`Reintentando en ${delay / 1000}s... (${retries} reintentos restantes)`);
+                    await new Promise(res => setTimeout(res, delay));
+                    return callGemini(prompt, retries - 1, delay * 2); // Exponential backoff
+                }
+                throw error;
+            }
+        }
+    </script>
+</body>
+</html>

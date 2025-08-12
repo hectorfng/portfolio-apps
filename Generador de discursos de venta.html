@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Discursos de Venta con IA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background: #1e1e1e;
+        }
+        .main-container {
+            background: linear-gradient(145deg, #2a2a2a, #1a1a1a);
+            border-radius: 20px;
+            box-shadow: 10px 10px 20px #161616, -10px -10px 20px #2e2e2e;
+        }
+        .form-control {
+            background-color: #252525;
+            border: 1px solid #333;
+        }
+        .form-control:focus {
+            background-color: #2a2a2a;
+            border-color: #8B5CF6; /* Violet-500 */
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.3);
+        }
+        .btn-primary {
+            background: linear-gradient(to right, #8B5CF6, #EC4899);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+<body class="text-gray-200 min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-3xl mx-auto main-container p-8 md:p-12">
+        <header class="text-center mb-10">
+            <h1 class="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-violet-400 to-pink-500 mb-2">Generador de Discursos de Venta</h1>
+            <p class="text-gray-400">Crea un pitch perfecto en segundos. Define tu producto, audiencia y tono.</p>
+        </header>
+
+        <main>
+            <div class="space-y-6">
+                <div>
+                    <label for="product" class="block text-sm font-medium text-gray-300 mb-1">Producto / Servicio</label>
+                    <input type="text" id="product" class="w-full p-3 rounded-lg text-gray-200 transition form-control" placeholder="Ej: Un software CRM con IA para pymes">
+                </div>
+                <div>
+                    <label for="audience" class="block text-sm font-medium text-gray-300 mb-1">Audiencia Objetivo</label>
+                    <input type="text" id="audience" class="w-full p-3 rounded-lg text-gray-200 transition form-control" placeholder="Ej: Gerentes de venta de empresas de 50-100 empleados">
+                </div>
+                <div>
+                    <label for="tone" class="block text-sm font-medium text-gray-300 mb-1">Tono del Mensaje</label>
+                    <select id="tone" class="w-full p-3 rounded-lg text-gray-200 transition form-control appearance-none" style="background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%239CA3AF%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.4-5.4-12.8z%22%2F%3E%3C%2Fsvg%3E'); background-repeat: no-repeat; background-position: right 0.7rem center; background-size: 0.65rem;">
+                        <option>Persuasivo y Energético</option>
+                        <option>Profesional y Corporativo</option>
+                        <option>Amigable y Cercano</option>
+                        <option>Directo y al Grano</option>
+                    </select>
+                </div>
+                <button id="generateButton" class="w-full text-white font-bold py-3 px-6 rounded-lg hover:opacity-90 transition-all duration-300 flex items-center justify-center btn-primary">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L15.232 5.232z"></path></svg>
+                    Generar Discurso
+                </button>
+            </div>
+
+            <div id="result" class="mt-10 hidden">
+                <div id="loader" class="text-center py-8">
+                    <svg class="animate-spin h-8 w-8 text-violet-400 mx-auto" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <p class="mt-4 text-gray-400">Creando un mensaje impactante...</p>
+                </div>
+                <div id="pitchContent" class="hidden bg-[#252525] p-6 rounded-lg border border-[#333]">
+                    <h3 class="text-xl font-bold text-violet-400 mb-4">Tu Discurso de Venta:</h3>
+                    <div id="pitchText" class="text-gray-300 whitespace-pre-wrap"></div>
+                </div>
+            </div>
+             <div id="error" class="hidden mt-6 p-4 bg-red-900/50 text-red-300 border border-red-700 rounded-lg">
+                <p><strong>Error:</strong> <span id="errorMessage"></span></p>
+             </div>
+        </main>
+    </div>
+
+    <script>
+        const generateButton = document.getElementById('generateButton');
+        const productInput = document.getElementById('product');
+        const audienceInput = document.getElementById('audience');
+        const toneSelect = document.getElementById('tone');
+        const resultDiv = document.getElementById('result');
+        const loader = document.getElementById('loader');
+        const pitchContent = document.getElementById('pitchContent');
+        const pitchText = document.getElementById('pitchText');
+        const errorDiv = document.getElementById('error');
+        const errorMessageSpan = document.getElementById('errorMessage');
+
+        generateButton.addEventListener('click', async () => {
+            const product = productInput.value.trim();
+            const audience = audienceInput.value.trim();
+            const tone = toneSelect.value;
+
+            if (!product || !audience) {
+                showError('Por favor, completa los campos de producto y audiencia.');
+                return;
+            }
+
+            hideError();
+            resultDiv.classList.remove('hidden');
+            loader.classList.remove('hidden');
+            pitchContent.classList.add('hidden');
+            generateButton.disabled = true;
+            generateButton.classList.add('opacity-50', 'cursor-not-allowed');
+
+            try {
+                const prompt = `
+                    Actúa como un experto en redacción publicitaria y ventas (copywriter). Genera un discurso de venta (sales pitch) conciso y persuasivo.
+
+                    - Producto/Servicio: "${product}"
+                    - Audiencia Objetivo: "${audience}"
+                    - Tono del Mensaje: "${tone}"
+
+                    Estructura el discurso de la siguiente manera:
+                    1.  **Gancho (Hook):** Una pregunta o afirmación inicial que capte la atención de la audiencia.
+                    2.  **Problema (Problem):** Describe el problema o "pain point" que la audiencia enfrenta y con el que tu producto se relaciona.
+                    3.  **Solución (Solution):** Presenta tu producto como la solución ideal a ese problema. Menciona 2-3 beneficios clave.
+                    4.  **Llamada a la Acción (Call to Action):** Un cierre claro que indique el siguiente paso que quieres que la audiencia tome.
+
+                    Genera solo el texto del discurso, sin los títulos de las secciones (ej. sin "Gancho:", "Problema:", etc.).
+                `;
+
+                const response = await callGemini(prompt);
+                displayPitch(response);
+
+            } catch (error) {
+                console.error('Error:', error);
+                showError('No se pudo generar el discurso. Por favor, inténtalo de nuevo.');
+            } finally {
+                loader.classList.add('hidden');
+                generateButton.disabled = false;
+                generateButton.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        });
+
+        function displayPitch(text) {
+            pitchText.textContent = text;
+            pitchContent.classList.remove('hidden');
+        }
+        
+        function showError(message) {
+            errorMessageSpan.textContent = message;
+            errorDiv.classList.remove('hidden');
+        }
+
+        function hideError() {
+            errorDiv.classList.add('hidden');
+        }
+
+        async function callGemini(prompt, retries = 3, delay = 1000) {
+            const apiKey = ""; // Use a backend in a real app
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }]
+            };
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) {
+                    const errorBody = await response.json();
+                    throw new Error(`API Error: ${response.status} - ${errorBody?.error?.message}`);
+                }
+                const result = await response.json();
+                if (result.candidates && result.candidates[0].content.parts[0].text) {
+                    return result.candidates[0].content.parts[0].text;
+                } else {
+                    if (result.promptFeedback && result.promptFeedback.blockReason) {
+                         throw new Error(`Request blocked for: ${result.promptFeedback.blockReason}`);
+                    }
+                    throw new Error("Unexpected API response format.");
+                }
+            } catch (error) {
+                if (retries > 0) {
+                    await new Promise(res => setTimeout(res, delay));
+                    return callGemini(prompt, retries - 1, delay * 2);
+                }
+                throw error;
+            }
+        }
+    </script>
+</body>
+</html>
