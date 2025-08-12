@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analizador de Feedback de Usuario con IA</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Merriweather:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Lato', sans-serif;
+            background-color: #f8f9fa;
+        }
+        h1, h2, h3 {
+            font-family: 'Merriweather', serif;
+        }
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            border: 1px solid #e9ecef;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+    </style>
+</head>
+<body class="text-gray-800 min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-4xl mx-auto">
+        <header class="text-center mb-10">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-2">Analizador de Feedback</h1>
+            <p class="text-gray-600 text-lg">Pega el feedback de tus usuarios y la IA extraerá los insights más importantes.</p>
+        </header>
+
+        <main class="card p-8 md:p-10">
+            <div class="space-y-4">
+                <div>
+                    <label for="userFeedback" class="block text-sm font-bold text-gray-700 mb-2">Feedback de Usuarios</label>
+                    <textarea id="userFeedback" rows="8" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" placeholder="Pega aquí múltiples comentarios, reseñas o respuestas de encuestas..."></textarea>
+                </div>
+                <button id="analyzeButton" class="w-full bg-teal-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-teal-700 transition-all duration-300 flex items-center justify-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    Analizar Feedback
+                </button>
+            </div>
+
+            <div id="result" class="mt-10 hidden">
+                <div id="loader" class="text-center py-8">
+                    <div class="w-16 h-16 border-4 border-dashed rounded-full animate-spin border-teal-500 mx-auto"></div>
+                    <p class="mt-4 text-gray-600">Procesando comentarios y extrayendo insights...</p>
+                </div>
+                
+                <div id="analysisContent" class="hidden space-y-8">
+                    <div>
+                        <h3 class="text-2xl font-bold text-teal-800 mb-4 flex items-center">
+                            <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.657 7.343A8 8 0 0117.657 18.657z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.879 16.121A3 3 0 1014.12 11.88l-4.242 4.242z"></path></svg>
+                            Insights Clave
+                        </h3>
+                        <ul id="insightsList" class="space-y-3 text-gray-700 bg-teal-50 p-4 rounded-lg border border-teal-200">
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="text-2xl font-bold text-blue-800 mb-4 flex items-center">
+                            <svg class="w-6 h-6 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"></path></svg>
+                            Sugerencias de Mejora
+                        </h3>
+                        <ul id="suggestionsList" class="space-y-3 text-gray-700 bg-blue-50 p-4 rounded-lg border border-blue-200">
+                        </ul>
+                    </div>
+                </div>
+            </div>
+             <div id="error" class="hidden mt-6 p-4 bg-red-100 text-red-700 border border-red-200 rounded-lg">
+                <p><strong>Error:</strong> <span id="errorMessage"></span></p>
+             </div>
+        </main>
+    </div>
+
+    <script>
+        const analyzeButton = document.getElementById('analyzeButton');
+        const userFeedbackInput = document.getElementById('userFeedback');
+        const resultDiv = document.getElementById('result');
+        const loader = document.getElementById('loader');
+        const analysisContent = document.getElementById('analysisContent');
+        const insightsList = document.getElementById('insightsList');
+        const suggestionsList = document.getElementById('suggestionsList');
+        const errorDiv = document.getElementById('error');
+        const errorMessageSpan = document.getElementById('errorMessage');
+
+        analyzeButton.addEventListener('click', async () => {
+            const userFeedback = userFeedbackInput.value.trim();
+            if (!userFeedback) {
+                showError('Por favor, pega el feedback de los usuarios.');
+                return;
+            }
+
+            hideError();
+            resultDiv.classList.remove('hidden');
+            loader.classList.remove('hidden');
+            analysisContent.classList.add('hidden');
+            analyzeButton.disabled = true;
+            analyzeButton.classList.add('opacity-50', 'cursor-not-allowed');
+
+            try {
+                const prompt = `
+                    Actúa como un Product Manager experimentado. Analiza el siguiente conjunto de feedback de usuarios. Tu objetivo es sintetizar la información y extraer los puntos más importantes.
+                    Feedback de usuarios:
+                    ---
+                    ${userFeedback}
+                    ---
+
+                    Genera la respuesta en formato JSON con la siguiente estructura:
+                    {
+                      "key_insights": ["Una lista de 3-5 insights o temas recurrentes más importantes que se desprenden del feedback. Deben ser concisos y claros."],
+                      "improvement_suggestions": ["Una lista de 3-5 sugerencias de mejora accionables basadas directamente en el feedback proporcionado. Prioriza las que parecen tener mayor impacto."]
+                    }
+                    No incluyas nada más que el objeto JSON en tu respuesta.
+                `;
+
+                const response = await callGemini(prompt);
+                const analysis = JSON.parse(response);
+                displayAnalysis(analysis);
+
+            } catch (error) {
+                console.error('Error:', error);
+                showError('No se pudo analizar el feedback. Por favor, inténtalo de nuevo.');
+            } finally {
+                loader.classList.add('hidden');
+                analyzeButton.disabled = false;
+                analyzeButton.classList.remove('opacity-50', 'cursor-not-allowed');
+            }
+        });
+
+        function displayAnalysis(analysis) {
+            insightsList.innerHTML = analysis.key_insights.map(item => `<li class="flex items-start"><span class="mr-2 text-teal-600">▸</span><span>${item}</span></li>`).join('');
+            suggestionsList.innerHTML = analysis.improvement_suggestions.map(item => `<li class="flex items-start"><span class="mr-2 text-blue-600">▸</span><span>${item}</span></li>`).join('');
+            analysisContent.classList.remove('hidden');
+        }
+        
+        function showError(message) {
+            errorMessageSpan.textContent = message;
+            errorDiv.classList.remove('hidden');
+        }
+
+        function hideError() {
+            errorDiv.classList.add('hidden');
+        }
+
+        async function callGemini(prompt, retries = 3, delay = 1000) {
+            const apiKey = "AIzaSyDzqjXmq-ANSWUetgRv_T6P_CHbDI8b18U"; // Use a backend in a real app
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-05-20:generateContent?key=${apiKey}`;
+            const payload = {
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: {
+                    responseMimeType: "application/json",
+                }
+            };
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (!response.ok) {
+                    const errorBody = await response.json();
+                    throw new Error(`API Error: ${response.status} - ${errorBody?.error?.message}`);
+                }
+                const result = await response.json();
+                if (result.candidates && result.candidates[0].content.parts[0].text) {
+                    return result.candidates[0].content.parts[0].text;
+                } else {
+                    if (result.promptFeedback && result.promptFeedback.blockReason) {
+                         throw new Error(`Request blocked for: ${result.promptFeedback.blockReason}`);
+                    }
+                    throw new Error("Unexpected API response format.");
+                }
+            } catch (error) {
+                if (retries > 0) {
+                    await new Promise(res => setTimeout(res, delay));
+                    return callGemini(prompt, retries - 1, delay * 2);
+                }
+                throw error;
+            }
+        }
+    </script>
+</body>
+</html>
